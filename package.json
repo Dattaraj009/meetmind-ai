@@ -4,9 +4,22 @@
   "description": "",
   "license": "ISC",
   "author": "datta",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+
+    "dev": "nodemon src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dattaraj009/meetmind-ai.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/Dattaraj009/meetmind-ai/issues"
+  },
+  "homepage": "https://github.com/Dattaraj009/meetmind-ai#readme",
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }
