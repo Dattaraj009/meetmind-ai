@@ -111,7 +111,7 @@ const loginUser = asyncHandler(async(req,res)=>{
     throw new ApiError(400,"Invalid user credentials");
   }
   
-  const {refreshToken , accessToken} = generateAccessTokenAndRefreshToken(user.id);
+  const {refreshToken , accessToken} = await generateAccessTokenAndRefreshToken(user.id);
 
   const loggedIn = {
     id: user.id,
@@ -161,4 +161,47 @@ const logoutUser = asyncHandler(async(req,res)=>{
   )
 })
 
-export {registerUser,loginUser,logoutUser};
+const refreshAccessToken = asyncHandler(async(req,res)=>{
+  const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+
+  if(!incomingRefreshToken){
+    throw new ApiError(401,"unauthorized request - No refresh token provided")
+  }
+
+  try {
+    const decodeToken = jwt.verify(incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET)
+
+    const user = await prisma.user.findUnique({
+      where:{ id: decodeToken?.id },
+    })
+
+    if(!user){
+      throw new ApiError(401,"invalid refreshToken");
+    }
+
+    if(incomingRefreshToken !== user?.refreshToken){
+      throw new ApiError(401,"refreshToken token expired or used");
+    }
+
+    const options = {
+      httpOnly:true,
+      secure:true,
+      sameSite:"strict",
+    }
+
+    const {accessToken, refreshToken:newrefreshToken} = await generateAccessTokenAndRefreshToken(user.id)
+
+    res.status(200)
+    .cookie("accessToken",accessToken,options)
+    .cookie("refreshToken",refreshToken,options)
+    .json(
+      new ApiResponse(
+        200,
+        {accessToken,refreshToken:newrefreshToken}, "Access token refreshed"
+      )
+    )
+  } catch (error) {
+       throw new ApiError(401,error?.message || "Invalid refresh Token") 
+  }
+})
+export {registerUser,loginUser,logoutUser,refreshAccessToken};
